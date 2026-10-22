@@ -19,13 +19,15 @@ class RenogyBatteryDriver extends BatteryDriver {
   @override
   String get name => 'Renogy';
 
-  /// Renogy LFP modules advertise an `RBT…` name and their distinctive FFD0
-  /// write service. Matching the (unique) FFD0 service plus the name keeps
-  /// Renogy out of the shared-FFF0 probe set while still identifying it by name
-  /// even when a module only advertises the FFF0 notify service.
+  /// Match Renogy **smart batteries** by their `RBT…` name only. The FFD0
+  /// service is shared by every Renogy BT device (charge controllers, inverters,
+  /// shunts — e.g. a `BT-TH-…` BT-2 module fronting an MPPT controller), so
+  /// matching the service would mislabel those non-batteries as a battery and
+  /// then fail on the battery registers. CellScope reads batteries, so only the
+  /// battery name qualifies. (If a Renogy battery advertises a different name,
+  /// use "Battery not listed? Help add it" so we can add it.)
   @override
   final BleSignature signature = BleSignature(
-    services: [kWriteService],
     namePattern: RegExp(r'^(RBT|RNG)', caseSensitive: false),
   );
 

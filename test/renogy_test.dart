@@ -37,12 +37,14 @@ void main() {
     expect(c.temperaturesC, [25.0, 26.0]);
   });
 
-  test('driver is name-matched (RBT) over the shared FFF0 service', () {
+  test('driver matches a Renogy battery by RBT name, not the shared FFD0 service', () {
     final d = RenogyBatteryDriver();
     expect(d.id, 'renogy');
-    expect(d.signature.services, contains(kWriteService));
-    final rbt = BleDevice(deviceId: 'x', name: 'RBT12100LFP-BT', rssi: -50, services: [kNotifyService]);
-    final other = BleDevice(deviceId: 'y', name: 'whatever', rssi: -50, services: [kNotifyService]);
-    expect(d.score(rbt) > d.score(other), isTrue); // name match scores higher
+    expect(d.signature.services, isEmpty); // FFD0 is shared with controllers/inverters
+    final rbt = BleDevice(deviceId: 'x', name: 'RBT12100LFP-BT', rssi: -50, services: [kWriteService]);
+    // A BT-2 module fronting a charge controller shares FFD0 but isn't a battery.
+    final controller = BleDevice(deviceId: 'y', name: 'BT-TH-66F8EE0D', rssi: -50, services: [kWriteService]);
+    expect(d.score(rbt) > 0, isTrue);
+    expect(d.score(controller), 0); // not a battery -> not claimed
   });
 }
